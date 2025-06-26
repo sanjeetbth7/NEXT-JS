@@ -19,6 +19,7 @@
 * You can nest folders inside the `app` directory to create **nested routes**.
 * Each nested folder should have its own `page.jsx` file for the route.
 * You can also use `layout.jsx` in a folder to **share layout between nested pages**.
+* you can see app/services 
 
 #### 📁 Example:
 
@@ -57,7 +58,82 @@ import Link from 'next/link';
 > Here in herf, we need to give full route, e.g. if the path is /services/seo then in seo sevices file if linking with seo file then "./seo" will not work, we need to write full as '/services/seo'.
 e.g. ``` <Link href="/services/seo">SEO</Link>```
 ---
-## 📂 Dynamic Routing
+Great! Based on the style you've used, here's a matching continuation explaining **📂 Dynamic Routing** and **📂 Nested Dynamic Routing** in the same structured format:
 
 ---
+
+## 📂 Dynamic Routing
+
+* In Next.js, **dynamic routing** allows you to create pages where part of the route is **variable** (like `/blog/[slug]` or `/user/[id]`).
+* To create a dynamic route, use **square brackets** (`[param]`) inside the `app` directory.
+
+#### 📁 Example:
+
+```
+app/
+├── blog/
+│   └── [blogID]/
+│       └── page.jsx     // Renders dynamic route like /blog/my-first-post
+```
+
+### ✅ Usage inside `page.jsx`:
+
+```jsx
+import Link from 'next/link';
+
+export default async function Page({ params }) {
+  const { blogID } = await params;
+  return (
+    <div> <h1>Page: {blogID}</h1> </div>
+  );
+}
+```
+
+### 🌐 Route Example:
+
+```
+/blog/my-first-post → renders: Blog Slug: my-first-post
+```
+
+> **Note:** Dynamic segments are case-sensitive. `/blog/Post1` and `/blog/post1` are treated as different routes.
+
+---
+
 ## 📂 Nested Dynamic Routing
+
+* You can also **nest dynamic routes**, allowing deeper levels like `/blog/[blogID]/comments/[commentID]`.
+* Each dynamic segment gets its own folder with the `[param]` naming.
+
+#### 📁 Example:
+
+```
+app/
+├── blog/
+│   └── [blogID]/
+│       └── comments/
+│           └── [commentID]/
+│               └── page.jsx    // Renders /blogs/123/comments/22
+```
+
+### ✅ Usage inside `page.jsx`:
+
+```jsx
+export default async function ({ params }) {
+  const { blogID, commentID } = await params;
+  return (
+    <div> Comment no.{" "} <b> <i>{commentID}</i>  </b>{" "}  of blog <b>{blogID}.</b>
+    </div>
+  );
+}
+```
+
+### 🌐 Route Example:
+
+```
+http://localhost:3000/blogs/123/comments/22 → renders: blogID: 123 | commentID: 22
+```
+
+> ✅ Tip: Always use descriptive dynamic names like `[userId]` or `[slug]` for better readability.
+
+---
+
