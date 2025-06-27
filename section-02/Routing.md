@@ -104,7 +104,7 @@ export default async function Page({ params }) {
 * You can also **nest dynamic routes**, allowing deeper levels like `/blog/[blogID]/comments/[commentID]`.
 * Each dynamic segment gets its own folder with the `[param]` naming.
 
-#### 📁 Example:
+#### Example:
 
 ```
 app/
@@ -136,4 +136,213 @@ http://localhost:3000/blogs/123/comments/22 → renders: blogID: 123 | commentID
 > ✅ Tip: Always use descriptive dynamic names like `[userId]` or `[slug]` for better readability.
 
 ---
+
+
+## 📂 **Catch-all Routes**
+
+**Syntax:**
+
+```tsx
+ /files/[...filePath].js
+```
+
+**Behavior:**
+
+* Matches `/files/a`, `/files/a/b`, `/files/a/b/c`, etc.
+* The `slug` (filePath) will be an array:
+
+  * `/blog/a` → `slug = ['a']`
+  * `/blog/a/b` → `slug = ['a', 'b']`
+
+**Use Case:**
+
+* Useful for deep dynamic routing where the number of URL segments is unknown.
+
+### 📂 **Optional Catch-all Routes**
+
+**Syntax:**
+
+```tsx
+ /files/[[...slug]].js
+```
+
+**Behavior:**
+
+* Matches everything a catch-all route does **plus** the base path `/files`.
+* The `slug` is:
+
+  * `undefined` for `/blog`
+  * `[]` for `/blog/`
+  * `['a']` for `/blog/a`, etc.
+
+```
+import { use } from "react";
+export default function Files({params}) {
+    const {filePath} = use(params);
+  return (
+    <h1>file path <i>/{filePath?.join('/')}</i></h1>
+  )
+}
+```
+* if `localhost:3000/files/imi/343/this/is/st`  then output : file path /imi/343/this/is/st
+* if `localhost:3000/files`  then output : file path /
+
+**Use Case:**
+
+* Ideal when both the base route and dynamic nested routes should resolve to the same page.
+* Single entry point for a flexible file-based system.
+* For example:
+  * Building a file explorer, like Google Drive, where folders and files live at unknown depths.
+  * Serving dynamic resources based on the path hierarchy.
+  * Handling both /files (root directory) and /files/... (nested files or folders) with one component.
+
+### ⚠️ 3. Route Conflicts with Optional Catch-all Routes
+
+#### 📍 Example Folder Structure:
+
+```bash
+/app
+├── file
+│   ├── [[...slug]].js
+│   └── page.js
+```
+
+### ❌ Conflict:
+
+* If both `[[...slug]].js` and `page.js` exist under the same folder, a **routing conflict occurs**.
+* Next.js throws an error because:
+
+  * `/files` is matched by both `/files/page.js` and `/blog/[[...slug]].js`.
+
+### ✅ Resolution:
+
+* **Do not use `page.js` if `[[...slug]].js` is present** in the same folder.
+* Instead, handle the base case (`slug === undefined`) inside `[[...slug]].js`.
+
+### ✅ Inside `[[...slug]].js`:
+
+```tsx
+export async function getStaticProps({ params }) {
+  if (!params.slug) {
+    // Handle base route (/blog)
+  } else {
+    // Handle nested routes (/blog/a, /blog/a/b, etc.)
+  }
+}
+```
+
+---
+
+## ✅ Summary Table
+
+| Feature              | `[...slug]`         | `[[...slug]]`          |
+| -------------------- | ------------------- | ---------------------- |
+| Matches base route?  | ❌ `/blog` = 404     | ✅ `/blog` = matched    |
+| `params.slug` value  | `['a', 'b']`        | `undefined` or array   |
+| Use case             | Deep dynamic routes | Base + deep dynamic    |
+| Conflict with index? | ❌                   | ✅ (with `/blog/index`) |
+
+---
+
+---
+
+## 📘 NOTE : Next.js App Router — `params` and `searchParams` 
+
+### 🔹 What are `params` and `searchParams`?
+
+* **`params`**: Object that holds dynamic route values (e.g., `/blogs/[id]` → `{ id: '123' }`).
+* **`searchParams`**: Object that holds query string values from the URL (e.g., `?q=react`).
+
+### 🔹 How are they passed?
+
+In **Next.js App Router (from `/app` folder)**:
+
+* These are automatically passed into the page component.
+* Example folder:
+
+  ```
+  app/
+    blogs/
+      [blogID]/
+        page.js
+  ```
+* Example route:
+
+  ```
+  /blogs/123?q=react
+  ```
+
+### 🔹 What do they contain?
+
+```js
+{
+  params: { blogID: '123' },
+  searchParams: URLSearchParams { 'q' => 'react' }
+}
+```
+
+### 🔹 Are they Promises?
+
+✅ **Yes, in Next.js 15+**, both `params` and `searchParams` are **Promises**
+You **must unwrap** them using either:
+
+#### **Option 1: ✅ `async/await`**
+
+```js
+export default async function BlogPage(obj) {
+  const params = await obj.params;
+  const searchParams = await obj.searchParams;
+
+  return (
+    <div>
+      Blog ID: {params.blogID}
+      <br />
+      Query: {searchParams.get('q')}
+    </div>
+  );
+}
+```
+> ⚠️ `async/await` can only be used in Server Components — not in Client Components.
+
+#### **Option 2: ✅ `use()` (React hook for Server Components)**
+
+```js
+import { use } from 'react';
+
+export default function BlogPage(obj) {
+  const params = use(obj.params);
+  const searchParams = use(obj.searchParams);
+
+  return (
+    <div>
+      Blog ID: {params.blogID}
+      <br />
+      Query: {searchParams.get('q')}
+    </div>
+  );
+}
+```
+
+**❌ Common Mistake**
+
+```js
+export default function Page({ params }) {
+  console.log(params.blogID); // ❌ Will be undefined if not unwrapped
+}
+```
+
+> In Next.js 15+, `params` is a Promise. Direct access without `await` or `use()` will give **undefined**.
+
+
+**✅ When to Use What?**
+
+| Situation                    | Use                           |
+| ---------------------------- | ----------------------------- |
+| Server Component (default)   | `async` + `await` ✅           |
+| Server Component (non-async) | `use()` hook ✅                |
+| Client Component             | `use()` hook ✅  |
+
+> ***Note :*** A clinent component can't be a asynchronous function. That's we need to use `use()` hook.
+---
+
 
