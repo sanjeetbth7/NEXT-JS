@@ -1,4 +1,7 @@
 import { use } from "react";
+export const metadata = {
+  title: "About",
+};
 export default function About( {params, searchParams} ) {
   return (
     <div><h1>About</h1>

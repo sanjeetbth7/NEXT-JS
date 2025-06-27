@@ -346,3 +346,256 @@ export default function Page({ params }) {
 ---
 
 
+## 📘 Next.js Layouts (App Router)
+
+### ✅ 1. What is a Layout?
+
+A **layout** in Next.js is a shared UI structure (like header, footer, or sidebar) used to wrap around multiple pages. It helps avoid repeating common code across different pages.
+
+In the **App Router** (under the `/app` folder), layouts are **server components** by default and support nesting.
+
+---
+
+### ✅ 2. What is `RootLayout`?
+
+`RootLayout` is the top-most layout for your app, defined in `/app/layout.js`. It wraps **all pages and nested layouts** and must include the `<html>` and `<body>` tags.
+
+#### 🔸 Example:
+
+```js
+import Link from "next/link";
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body>
+        <header style={{ background: 'LawnGreen' }}>Header</header>
+        <Link href="/">Home</Link>
+        {children}
+        <footer style={{ background: 'LightGreen' }}>Footer</footer>
+      </body>
+    </html>
+  );
+}
+```
+
+#### 💡 Output:
+
+* This layout renders:
+
+  * A green header at the top
+  * A Home link
+  * The actual page content (`{children}`)
+  * A light green footer at the bottom
+
+### ✅ 3. Nested / Reusable Layout
+
+You can also create **layouts for specific routes**. For example, a special layout only for `/services` pages.
+
+#### 🔸 Example: `app/services/layout.js`
+
+```js
+export default function ServiesLayout({ children }) {
+  return (
+    <section>
+      <h3 style={{ color: 'Green', background: 'aqua' }}>Servies Layout</h3>
+      {children}
+    </section>
+  );
+}
+```
+
+#### 💡 Output:
+
+* When you visit `/services`, the page will be wrapped inside:
+
+  * A section with a green heading saying "Servies Layout"
+  * Followed by that page’s actual content
+
+### ✅ 4. Layout Nesting
+
+Layouts are **automatically nested**. If a route uses both a `RootLayout` and a route-specific layout (like `ServiesLayout`), the structure will be:
+
+```
+<html>
+  <body>
+    Header
+    Home Link
+    <section>
+      Servies Layout
+      <actual page content>
+    </section>
+    Footer
+  </body>
+</html>
+```
+
+### 🧠 Summary
+
+| Feature            | RootLayout                  | Nested Layout (like `ServiesLayout`) |
+| ------------------ | --------------------------- | ------------------------------------ |
+| Required?          | Yes (`app/layout.js`)       | No, only if you want to customize    |
+| HTML wrapper?      | Must include `<html><body>` | No need                              |
+| Shared across all? | Yes                         | Only for that specific route         |
+| Purpose            | App-wide structure          | Route-specific wrapping              |
+
+---
+
+
+## 📘 Next.js Metadata API (App Router) – Full Notes
+
+### 🧠 What is Metadata?
+
+**Metadata** is information about your web page that helps:
+
+* Search engines understand your content (SEO)
+* Social media generate previews (Open Graph)
+* Users see relevant page titles and descriptions in browser tabs
+
+Common metadata includes:
+
+* `<title>`
+* `<meta name="description">`
+* `<meta property="og:image">`
+* etc.
+
+---
+
+### Where to Use Metadata in Next.js?
+
+In **App Router** (inside `/app` folder), Next.js recommends using the **Metadata API** instead of the old `<Head>` tag.
+
+You define metadata in:
+
+* `layout.js` (shared across pages)
+* `page.js` (specific to a route)
+
+### 1. Static Metadata using `export const metadata`
+
+You can define metadata directly in the file like this:
+
+```js
+export const metadata = {
+  title: 'About Page',
+  description: 'Learn more about us.',
+};
+```
+
+This will output:
+
+```html
+<title>About Page</title>
+<meta name="description" content="Learn more about us." />
+```
+
+### 2. Title Templates (Reusable Page Titles)
+
+#### **💡 Use case: Show title as `PageName | SiteName` for all pages.**
+
+In your **layout** file (`app/layout.js`):
+
+```js
+export const metadata = {
+  title: {
+    default: 'My Website',
+    template: '%s | My Website',
+  },
+};
+```
+
+Then in your **page** file (`app/about/page.js`):
+
+```js
+export const metadata = {
+  title: 'About',
+};
+```
+
+🔽 Final HTML:
+
+```html
+<title>About | My Website</title>
+```
+
+---
+
+### 3. Absolute Title (Ignore Template)
+
+If you want to override and use **only your custom title**:
+
+```js
+export const metadata = {
+  title: {
+    absolute: 'Contact - Customer Help',
+  },
+};
+```
+
+🔽 Final HTML:
+
+```html
+<title>Contact - Customer Help</title>
+```
+
+✅ It **ignores the parent template**.
+
+
+#### **Other Common Metadata Fields**
+
+You can also set other metadata:
+
+```js
+export const metadata = {
+  title: 'Home',
+  description: 'Welcome to our blog',
+  keywords: ['blog', 'nextjs', 'webdev'],
+  authors: [{ name: 'Sanjeet Kumar' }],
+  icons: {
+    icon: '/favicon.ico',
+  },
+  openGraph: {
+    title: 'My Blog',
+    description: 'Read the latest articles',
+    url: 'https://myblog.com',
+    images: ['/og-image.png'],
+  },
+};
+```
+
+#### **Dynamic Metadata with `generateMetadata()`**
+
+If metadata depends on route params or fetched data:
+
+```js
+export async function generateMetadata({ params }) {
+  const post = await getPost(params.slug);
+
+  return {
+    title: post.title,
+    description: post.excerpt,
+  };
+}
+```
+
+#### **Head Component vs Metadata API**
+
+| Feature      | `<Head>` (Old Way)                | `metadata` (New Way – App Router)     |
+| ------------ | --------------------------------- | ------------------------------------- |
+| Usage        | Inside JSX                        | Outside JSX (`export const metadata`) |
+| SEO friendly | Yes, but manual                   | Yes, auto-optimized                   |
+| Performance  | Not pre-analyzed                  | Statically analyzed by Next.js        |
+| Best for     | Pages Router / dynamic edge cases | App Router with static/dynamic routes |
+
+---
+
+#### **🧠 Why Prefer `metadata` API?**
+
+* ✅ Better performance (Next.js can optimize builds)
+* ✅ Cleaner code (no manual `<Head>`)
+* ✅ Automatic merging of metadata from layout + page
+* ✅ Template titles and default fallbacks
+* ✅ Works well with server components
+
+
+> ***NOTE :*** you can only use metadata api me server component, for client component you need to use layout or other methods.
+---

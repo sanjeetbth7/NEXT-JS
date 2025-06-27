@@ -2,6 +2,10 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+// export const metadata = {
+//   title: "Blogs",
+// };
+
 export default function Blogs() {
   const [query, setQuery] = useState('');
   const router = useRouter();

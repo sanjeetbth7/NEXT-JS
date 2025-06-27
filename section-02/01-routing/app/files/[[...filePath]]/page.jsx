@@ -1,4 +1,9 @@
 import { use } from "react";
+
+export const metadata = {
+  title: "Files",
+};
+
 export default function Files({params}) {
     const {filePath} = use(params);
   return (

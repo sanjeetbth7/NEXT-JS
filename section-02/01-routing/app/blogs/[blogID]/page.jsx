@@ -1,5 +1,13 @@
 import Link from 'next/link';
 
+export async function generateMetadata({ params }) {
+  const { blogID } = await params;
+
+  return {
+    title: `Blog ${blogID}` ,
+  };
+}
+
 export default async function Page({ params }) {
   const { blogID } = await params;
 
